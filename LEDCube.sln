@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LEDCube", "LEDCube\LEDCube.csproj", "{3856B272-53F5-44D9-A4E4-433EE6D0CC47}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmudgeIT.Tlc5940", "TLC5940\SmudgeIT.Tlc5940.csproj", "{6CE7856E-44C2-4641-8384-E621B3354279}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,10 +15,6 @@ Global
 		{3856B272-53F5-44D9-A4E4-433EE6D0CC47}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3856B272-53F5-44D9-A4E4-433EE6D0CC47}.Release|Any CPU.Build.0 = Release|Any CPU
 		{3856B272-53F5-44D9-A4E4-433EE6D0CC47}.Release|Any CPU.Deploy.0 = Release|Any CPU
-		{6CE7856E-44C2-4641-8384-E621B3354279}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6CE7856E-44C2-4641-8384-E621B3354279}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6CE7856E-44C2-4641-8384-E621B3354279}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6CE7856E-44C2-4641-8384-E621B3354279}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
