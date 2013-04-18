@@ -106,6 +106,8 @@ namespace Tlc5940
 
             GSCLKPin.SetPulse(gsclk_period, 1);
             BLANKPin.SetPulse((gsclk_period * 4096), 1);
+            // THis is the arduino formula:
+            //BLANKPin.SetPulse((gsclk_period + 1) * (4096 / 2), 1);
         
         }
 
@@ -219,7 +221,8 @@ namespace Tlc5940
         public void UpdateChannel()
         {
 
-
+           
+            
             if (useSPIInterface)
             {
                 SPIBus.Write(DataBuffer);
@@ -244,9 +247,11 @@ namespace Tlc5940
             //BLANKPin.SetPulse(10, 10); <- 
 
             // push the data from the input buffer on the TLC to the internal registers
+
             XLATpin.Write(true);
             XLATpin.Write(false);
-
+            //BLANKPin.SetPulse((gsclk_period * 4096), 1);
+            
             // push the PWM drivers back up
 
             // THis is the arduino formula:
@@ -254,8 +259,8 @@ namespace Tlc5940
 
             // This is my formula. No offense, but it behaves good for me! An offset of even 1 on the total period makes the 
             // output flicker!!! The combination 3 and 8192 definitely gives bad flickering results.
-            GSCLKPin.SetPulse(gsclk_period, 1);
-            BLANKPin.SetPulse((gsclk_period * 4096), 1);
+            
+            
         }
 
         #endregion
