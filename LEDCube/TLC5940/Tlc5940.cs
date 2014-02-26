@@ -157,7 +157,9 @@ namespace Tlc5940
         ///    14 = second half of [1] and    [2]
         /// etc. down to 0
         /// </summary>
-        byte[] DataBuffer = new byte[24]; // = 16 channels * 12 bits
+        //byte[] DataBuffer = new byte[24]; // = 16 channels * 12 bits
+        //byte[] DataBuffer = new byte[48]; // = 32 channels * 12 bits
+        byte[] DataBuffer = new byte[168]; // = 32 channels * 12 bits
 
         #endregion
 
@@ -171,11 +173,13 @@ namespace Tlc5940
         /// <param name="Value"></param>
         public void SetValue(uint Channel, uint Value)
         {
-            if ((Channel >= 0) && (Channel <= 15))
+            const uint numberOfChannels = 112;
+            
+            if ((Channel >= 0) && (Channel <= numberOfChannels-1))
             {
                 // We need to feed in the MSB from the highest channel first. If we map the data byte by byte, it will work
                 // like this: 
-                uint ChannelIndex = 15 - Channel;
+                uint ChannelIndex = (numberOfChannels - 1) - Channel;
 
                 // even channels = byte + halfbyte, odd channels = halfbyte + byte
                 uint set = ChannelIndex / 2;
@@ -200,7 +204,6 @@ namespace Tlc5940
             {
                 throw new InvalidChannelException(Channel);
             }
-
         }
 
         /// <summary>
@@ -225,6 +228,7 @@ namespace Tlc5940
             
             if (useSPIInterface)
             {
+               
                 SPIBus.Write(DataBuffer);
             }
             else
