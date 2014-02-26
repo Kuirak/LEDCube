@@ -59,6 +59,7 @@ namespace LEDCube
         public void Off()
         {
            Set(0,0,0);
+          
         }
 
 
@@ -68,6 +69,7 @@ namespace LEDCube
         public void On()
         {
             Set(100, 100, 100);
+            
         }
 
 
@@ -82,8 +84,22 @@ namespace LEDCube
             Red = r;
             Green = g;
             Blue = b;
+
         }
 
+        /// <summary>
+        /// Sets the color
+        /// </summary>
+        /// <param name="r">Red Color value</param>
+        /// <param name="g">Green Color value</param>
+        /// <param name="b">Blue Color value</param>
+        public void SetAndApplyToBuffer(uint r, uint g, uint b)
+        {
+            Red = r;
+            Green = g;
+            Blue = b;
+            SetValues();
+        }
 
         /// <summary>
         /// Set all Values directly to the tlc databuffer

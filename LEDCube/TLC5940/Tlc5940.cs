@@ -125,6 +125,7 @@ namespace LEDCube
 
             GSCLKPin.SetPulse(gsclk_period, 1);
             BLANKPin.SetPulse((gsclk_period * 4096), 1);
+            AllOne();
             Reset();
             // THis is the arduino formula:
             //BLANKPin.SetPulse((gsclk_period + 1) * (4096 / 2), 1);
@@ -194,6 +195,17 @@ namespace LEDCube
             for (int i = 0; i < dataBuffer.Length; i++)
             {
                 dataBuffer[i] = 0;
+            }
+            UpdateChannel();
+        } 
+        /// <summary>
+        /// Reset the buffer and update the tlcs
+        /// </summary>
+        public void AllOne()
+        {
+            for (int i = 0; i < dataBuffer.Length; i++)
+            {
+                dataBuffer[i] = byte.MaxValue;
             }
             UpdateChannel();
         }

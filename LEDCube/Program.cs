@@ -18,27 +18,16 @@ namespace LEDCube
             //OutputPort sin = new OutputPort(Pins.GPIO_PIN_D11, false);
             //OutputPort sclk = new OutputPort(Pins.GPIO_PIN_D13, false);
             
-            var led = new OutputPort(Pins.ONBOARD_LED, false);
-            var button = new InterruptPort(Pins.ONBOARD_SW1, true, Port.ResistorMode.Disabled, Port.InterruptMode.InterruptEdgeBoth);
-
-            button.OnInterrupt +=ButtonOnOnInterrupt;
-             
-
            
-
+            var button = new InterruptPort(Pins.ONBOARD_SW1, true, Port.ResistorMode.Disabled, Port.InterruptMode.InterruptEdgeBoth);
             
             var tlc5940 = new Tlc5940(112);
             //Tlc5940.Tlc5940 PwmDevice = new Tlc5940.Tlc5940(gsclk, blank, latch, sin, sclk);
-
-           
-           
-            
-           
-
            
             ThreadStart ledBlink = () =>
                                    {
                                        var ledtoggle = true;
+                                       var led = new OutputPort(Pins.ONBOARD_LED, false);
                                        while (true)
                                        {
                                            // Hook up to an Onboard LED , just to confirm that things are alive.
@@ -49,26 +38,40 @@ namespace LEDCube
                                    };
             new Thread(ledBlink).Start();
 
+            var cube = new Cube(6, tlc5940);
+            button.OnInterrupt += (port, data, time) =>
+                                  {
+                                      button.DisableInterrupt();
+                                      if (data == 1)
+                                      {
+                                          cube.CurrentLayer++;
+                                      }
+                                      button.EnableInterrupt();
+                                  } ;
+            cube.Start();
+
+            
+
 
         }
 
-        private static DateTime lastButtonTime = DateTime.Now;
-        private static void ButtonOnOnInterrupt(uint port, uint data, DateTime time)
-        {
-            if (data == 1)
-            {
-                if ((time - lastButtonTime).Milliseconds < 100)
-                    return;
+        //private static DateTime lastButtonTime = DateTime.Now;
+        //private static void ButtonOnOnInterrupt(uint port, uint data, DateTime time)
+        //{
+        //    if (data == 1)
+        //    {
+        //        if ((time - lastButtonTime).Milliseconds < 100)
+        //            return;
 
-                row++;
-                if (row >= rowLength)
-                {
-                    row = 0;
+        //        row++;
+        //        if (row >= rowLength)
+        //        {
+        //            row = 0;
                     
-                }
-                Debug.Print("Current row: "+row);
-                lastButtonTime = time;
-            }
-        }
+        //        }
+        //        Debug.Print("Current row: "+row);
+        //        lastButtonTime = time;
+        //    }
+        //}
     }
 }
