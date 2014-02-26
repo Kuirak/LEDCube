@@ -4,9 +4,10 @@ using Microsoft.SPOT.Hardware;
 using SecretLabs.NETMF.Hardware.Netduino;
 using SecretLabs.NETMF.Hardware;
 using System.Threading;
+using Math = System.Math;
 
 
-namespace Tlc5940
+namespace LEDCube
 {
     public class Tlc5940 
     {
@@ -74,10 +75,24 @@ namespace Tlc5940
          * - Using the VPRG to set the dot correction (the Sparkfun shield hides this pin, although there is a hole to connect to it, I think)
          * 
          */
+        private const uint SINGLE_TLC_CHANNEL_COUNT = 16;
 
-
+        public uint ValidateChannelCount(uint value)
+        {
+            if (value % SINGLE_TLC_CHANNEL_COUNT == 0)
+            {
+                return value;
+            }
+            throw new InvalidChannelException(value);
+        }
 
         #region C'tors
+
+        public Tlc5940(uint channelCount)
+            : this(Config.Device, Config.Gsclk, Config.Blank, Config.Latch, channelCount)
+        {
+            
+        }
 
         /// <summary>
         /// Create a tlc device, and configure it to communicate on the SPI interface. Set the SPI settings to neutral:
@@ -88,7 +103,8 @@ namespace Tlc5940
         /// <param name="PWMchannel1">Channel for the GSCLK pin</param>
         /// <param name="PWMChannel2">Channel for the BLANK pin</param>
         /// <param name="LATCHpin">Required output channel</param>
-        public Tlc5940(SPI.Configuration config, PWM gsclk, PWM blank, OutputPort LATCHport)
+        /// <param name="channelCount">Must be max Channelcount provided by the Tlc5940</param>
+        public Tlc5940(SPI.Configuration config, PWM gsclk, PWM blank, OutputPort LATCHport,uint channelCount)
         {
             useSPIInterface = true;
 
@@ -98,7 +114,10 @@ namespace Tlc5940
             GSCLKPin = gsclk;
             BLANKPin = blank;
             XLATpin = LATCHport;
-
+            this.channelCount = ValidateChannelCount(channelCount);
+            var bufferSize = (this.channelCount*12)/8; 
+            Debug.Print("DataBuffer size:" +bufferSize);
+            dataBuffer = new byte[bufferSize];
             // Clear the channels, and disable the output
             GSCLKPin.SetDutyCycle(0);
             BLANKPin.SetDutyCycle(0);
@@ -106,50 +125,52 @@ namespace Tlc5940
 
             GSCLKPin.SetPulse(gsclk_period, 1);
             BLANKPin.SetPulse((gsclk_period * 4096), 1);
+            Reset();
             // THis is the arduino formula:
             //BLANKPin.SetPulse((gsclk_period + 1) * (4096 / 2), 1);
         
         }
 
-        public Tlc5940(PWM gsclk, PWM blank, OutputPort xlat, OutputPort sin, OutputPort sclk)
-        {
-            GSCLKPin = gsclk;
-            BLANKPin = blank;
-            XLATpin = xlat;
-            SINPin = sin;
-            SCLKPin = sclk;
+        //public Tlc5940(PWM gsclk, PWM blank, OutputPort xlat, OutputPort sin, OutputPort sclk)
+        //{
+        //    GSCLKPin = gsclk;
+        //    BLANKPin = blank;
+        //    XLATpin = xlat;
+        //    SINPin = sin;
+        //    SCLKPin = sclk;
 
-            // Clear the channels, and disable the output
-            GSCLKPin.SetDutyCycle(0);
-            BLANKPin.SetDutyCycle(0);
-            XLATpin.Write(false);
-            SINPin.Write(false);
-            SCLKPin.Write(false);
+        //    // Clear the channels, and disable the output
+        //    GSCLKPin.SetDutyCycle(0);
+        //    BLANKPin.SetDutyCycle(0);
+        //    XLATpin.Write(false);
+        //    SINPin.Write(false);
+        //    SCLKPin.Write(false);
 
-            GSCLKPin.SetPulse(gsclk_period, 1);
-            BLANKPin.SetPulse((gsclk_period * 4096), 1);
+        //    GSCLKPin.SetPulse(gsclk_period, 1);
+        //    BLANKPin.SetPulse((gsclk_period * 4096), 1);
         
-        }
+        //}
 
 
         #endregion
 
         #region Properties
 
-        private bool useSPIInterface = false;
+        private readonly bool useSPIInterface;
         
         // spi:
         SPI.Configuration SPIDevice;
-        SPI SPIBus;
+        readonly SPI SPIBus;
 
         // direct writing
-        OutputPort SINPin;
-        OutputPort SCLKPin;
+        // OutputPort SINPin;
+        // OutputPort SCLKPin;
 
         // for both configs:
         PWM BLANKPin;
         PWM GSCLKPin;
-        OutputPort XLATpin;
+        readonly OutputPort XLATpin;
+        private readonly uint channelCount;
 
         /// <summary>
         /// Packed array of the channel data.
@@ -159,50 +180,62 @@ namespace Tlc5940
         /// </summary>
         //byte[] DataBuffer = new byte[24]; // = 16 channels * 12 bits
         //byte[] DataBuffer = new byte[48]; // = 32 channels * 12 bits
-        byte[] DataBuffer = new byte[168]; // = 32 channels * 12 bits
+        readonly byte[] dataBuffer; // = 32 channels * 12 bits
 
         #endregion
 
 
         #region Data access
+        /// <summary>
+        /// Reset the buffer and update the tlcs
+        /// </summary>
+        public void Reset()
+        {
+            for (int i = 0; i < dataBuffer.Length; i++)
+            {
+                dataBuffer[i] = 0;
+            }
+            UpdateChannel();
+        }
+
 
         /// <summary>
         /// Write data. Use the lowest 12 bits of value, rest is ignored.
         /// </summary>
-        /// <param name="Channel"></param>
-        /// <param name="Value"></param>
-        public void SetValue(uint Channel, uint Value)
+        /// <param name="channel"></param>
+        /// <param name="value"></param>
+        public void SetValue(uint channel, uint value)
         {
-            const uint numberOfChannels = 112;
-            
-            if ((Channel >= 0) && (Channel <= numberOfChannels-1))
+            uint numberOfChannels = channelCount;
+
+            if ((channel <= numberOfChannels-1))
             {
                 // We need to feed in the MSB from the highest channel first. If we map the data byte by byte, it will work
                 // like this: 
-                uint ChannelIndex = (numberOfChannels - 1) - Channel;
+                uint channelIndex = (numberOfChannels - 1) - channel;
 
                 // even channels = byte + halfbyte, odd channels = halfbyte + byte
-                uint set = ChannelIndex / 2;
-                uint offset = ChannelIndex % 2;  // even: offset 0, odd: offset 1
-                uint BufferPointer = set * 3;
+                uint set = channelIndex / 2;
+                uint offset = channelIndex % 2;  // even: offset 0, odd: offset 1
+                uint bufferPointer = set * 3;
 
                 // Mask out bits to write
-                uint WriteVal = Value & 0xFFF;
+                uint writeVal = value & 0xFFF;
 
                 if (offset == 0)
                 {
-                    DataBuffer[3 * set] = (byte)(WriteVal >> 4);
-                    DataBuffer[3 * set + 1] = (byte)(((WriteVal & 0xF) << 4) + (DataBuffer[3 * set + 1] & 0xF));
+                    dataBuffer[3 * set] = (byte)(writeVal >> 4);
+                    dataBuffer[3 * set + 1] = (byte)(((writeVal & 0xF) << 4) + (dataBuffer[3 * set + 1] & 0xF));
                 }
                 else
                 {
-                    DataBuffer[3 * set + 1] = (byte)((WriteVal >> 8) + (DataBuffer[3 * set + 1] & 0xF0));
-                    DataBuffer[3 * set + 2] = (byte)(WriteVal & 0xFF);
+                    dataBuffer[3 * set + 1] = (byte)((writeVal >> 8) + (dataBuffer[3 * set + 1] & 0xF0));
+                    dataBuffer[3 * set + 2] = (byte)(writeVal & 0xFF);
                 }
             }
             else
             {
-                throw new InvalidChannelException(Channel);
+                throw new InvalidChannelException(channel);
             }
         }
 
@@ -212,7 +245,7 @@ namespace Tlc5940
         /// <returns></returns>
         public byte[] ShowBuffer()
         {
-            return (byte[]) DataBuffer.Clone();
+            return (byte[]) dataBuffer.Clone();
         }
 
         uint gsclk_period = 2;
@@ -229,23 +262,23 @@ namespace Tlc5940
             if (useSPIInterface)
             {
                
-                SPIBus.Write(DataBuffer);
+                SPIBus.Write(dataBuffer);
             }
-            else
-            {
-                // write each of the bytes, and pulse the clock pin
-                for (int i = 0; i < DataBuffer.Length; i++)
-                { 
-                    byte j = 0x80;
-                    for (int k = 0; k < 8; k++)
-                    {
-                        SINPin.Write((DataBuffer[i] & j) != 0);
-                        SCLKPin.Write(true);
-                        SCLKPin.Write(false);
-                        j = (byte)(j >> 1);
-                    }
-                }
-            }
+            //else
+            //{
+            //    // write each of the bytes, and pulse the clock pin
+            //    for (int i = 0; i < dataBuffer.Length; i++)
+            //    { 
+            //        byte j = 0x80;
+            //        for (int k = 0; k < 8; k++)
+            //        {
+            //            SINPin.Write((dataBuffer[i] & j) != 0);
+            //            SCLKPin.Write(true);
+            //            SCLKPin.Write(false);
+            //            j = (byte)(j >> 1);
+            //        }
+            //    }
+            //}
 
             // pull down the PWM drivers
             //BLANKPin.SetPulse(10, 10); <- 
