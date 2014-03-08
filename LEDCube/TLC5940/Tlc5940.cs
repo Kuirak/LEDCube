@@ -117,18 +117,26 @@ namespace LEDCube
             this.channelCount = ValidateChannelCount(channelCount);
             var bufferSize = (this.channelCount*12)/8; 
             Debug.Print("DataBuffer size:" +bufferSize);
+            writeBuffer = new byte[bufferSize];
             dataBuffer = new byte[bufferSize];
+            OneBuffer =(byte[]) dataBuffer.Clone();
+            ZeroBuffer =(byte[]) dataBuffer.Clone();
+            for (int index = 0; index < OneBuffer.Length; index++)
+            {
+               OneBuffer[index] =byte.MaxValue;
+            }
             // Clear the channels, and disable the output
             GSCLKPin.SetDutyCycle(0);
             BLANKPin.SetDutyCycle(0);
             XLATpin.Write(false);
 
             GSCLKPin.SetPulse(gsclk_period, 1);
-            BLANKPin.SetPulse((gsclk_period * 4096), 1);
+            //BLANKPin.SetPulse((gsclk_period * 4096), 1);
+            BLANKPin.SetPulse((gsclk_period + 1) * (4096 / 2), 1);
             AllOne();
             Reset();
             // THis is the arduino formula:
-            //BLANKPin.SetPulse((gsclk_period + 1) * (4096 / 2), 1);
+            
         
         }
 
@@ -172,6 +180,8 @@ namespace LEDCube
         PWM GSCLKPin;
         readonly OutputPort XLATpin;
         private readonly uint channelCount;
+        uint gsclk_period = 2;
+        
 
         /// <summary>
         /// Packed array of the channel data.
@@ -181,8 +191,10 @@ namespace LEDCube
         /// </summary>
         //byte[] DataBuffer = new byte[24]; // = 16 channels * 12 bits
         //byte[] DataBuffer = new byte[48]; // = 32 channels * 12 bits
-        readonly byte[] dataBuffer; // = 32 channels * 12 bits
-
+        byte[] dataBuffer; // = 32 channels * 12 bits
+        private byte[] writeBuffer;
+        private byte[] OneBuffer;
+        private byte[] ZeroBuffer;
         #endregion
 
 
@@ -192,10 +204,7 @@ namespace LEDCube
         /// </summary>
         public void Reset()
         {
-            for (int i = 0; i < dataBuffer.Length; i++)
-            {
-                dataBuffer[i] = 0;
-            }
+            writeBuffer = ZeroBuffer;
             UpdateChannel();
         } 
         /// <summary>
@@ -203,12 +212,17 @@ namespace LEDCube
         /// </summary>
         public void AllOne()
         {
-            for (int i = 0; i < dataBuffer.Length; i++)
-            {
-                dataBuffer[i] = byte.MaxValue;
-            }
+            writeBuffer = OneBuffer;
             UpdateChannel();
         }
+
+        public void Push()
+        {
+            writeBuffer =(byte[]) dataBuffer.Clone();
+            dataBuffer = (byte[]) OneBuffer.Clone();
+            UpdateChannel();
+        } 
+        
 
 
         /// <summary>
@@ -260,7 +274,7 @@ namespace LEDCube
             return (byte[]) dataBuffer.Clone();
         }
 
-        uint gsclk_period = 2;
+        
 
 
         /// <summary>
@@ -273,24 +287,9 @@ namespace LEDCube
             
             if (useSPIInterface)
             {
-               
-                SPIBus.Write(dataBuffer);
+                SPIBus.Write(writeBuffer);
             }
-            //else
-            //{
-            //    // write each of the bytes, and pulse the clock pin
-            //    for (int i = 0; i < dataBuffer.Length; i++)
-            //    { 
-            //        byte j = 0x80;
-            //        for (int k = 0; k < 8; k++)
-            //        {
-            //            SINPin.Write((dataBuffer[i] & j) != 0);
-            //            SCLKPin.Write(true);
-            //            SCLKPin.Write(false);
-            //            j = (byte)(j >> 1);
-            //        }
-            //    }
-            //}
+           
 
             // pull down the PWM drivers
             //BLANKPin.SetPulse(10, 10); <- 

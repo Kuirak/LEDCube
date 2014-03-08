@@ -41,22 +41,23 @@ namespace LEDCube
             var rand = new Random();
             while (true)
             {
-                tlc5940.Reset();
                 
-                foreach (var layer in layers)
+
+                for (int index = 0; index < layers.Length; index++)
                 {
                     
-                    uint x = (uint) rand.Next(5);
-                    uint y = (uint) rand.Next(5);
-                    var r = ((uint) rand.Next(100)).Clamp(25,100);
-                    var g = ((uint)rand.Next(100)).Clamp(25, 100);
-                    var b = ((uint)rand.Next(100)).Clamp(25, 100);
-                    layer.GetLed(x, y).Set(r,g,b);
-                    layer.Push();
-                    layer.On();
-                    layer.Off();
+                    tlc5940.Reset();
+                    tlc5940.AllOne();
+                    layers[index].Port.Write(true);
+                    //uint x = (uint) rand.Next(6);
+                    //uint y = (uint) rand.Next(6);
+                    //var r = ((uint) rand.Next(100)).Clamp(25,100);
+                    //var g = ((uint)rand.Next(100)).Clamp(25, 100);
+                    //var b = ((uint)rand.Next(100)).Clamp(25, 100);
+                    //layer.GetLed(x, y).Set(r,g,b);
+                    Thread.Sleep(1);
+                    layers[index].Port.Write(false);
                 }
-                Thread.Sleep(15);
             }
         }
         /// <summary>
@@ -79,13 +80,13 @@ namespace LEDCube
     public class Layer
     {
         private readonly uint sideLength;
-        private readonly OutputPort port;
+        public readonly OutputPort Port;
         private readonly Tlc5940 tlc5940;
         public  Led[] Leds;
         public Layer(uint sideLength, OutputPort port, Tlc5940 tlc5940)
         {
             this.sideLength = sideLength;
-            this.port = port;
+            this.Port = port;
             this.tlc5940 = tlc5940;
             var channelCount = sideLength * sideLength * 3;
             var leds = new ArrayList();
@@ -99,7 +100,7 @@ namespace LEDCube
 
         public void On()
         {
-            port.Write(true);
+            Port.Write(true);
         }
 
         public void Push()
@@ -110,12 +111,11 @@ namespace LEDCube
                 led.Off();
             }
             tlc5940.UpdateChannel();
-            tlc5940.Reset();
         }
 
         public void Off()
         {
-            port.Write(false);
+            Port.Write(false);
         }
 
         public void AllLedsOn()

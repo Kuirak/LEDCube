@@ -24,19 +24,19 @@ namespace LEDCube
             var tlc5940 = new Tlc5940(112);
             //Tlc5940.Tlc5940 PwmDevice = new Tlc5940.Tlc5940(gsclk, blank, latch, sin, sclk);
            
-            ThreadStart ledBlink = () =>
-                                   {
-                                       var ledtoggle = true;
-                                       var led = new OutputPort(Pins.ONBOARD_LED, false);
-                                       while (true)
-                                       {
-                                           // Hook up to an Onboard LED , just to confirm that things are alive.
-                                           ledtoggle = !ledtoggle;
-                                           led.Write(ledtoggle);
-                                           Thread.Sleep(200);
-                                       }
-                                   };
-            new Thread(ledBlink).Start();
+            //ThreadStart ledBlink = () =>
+            //                       {
+            //                           var ledtoggle = true;
+            //                           var led = new OutputPort(Pins.ONBOARD_LED, false);
+            //                           while (true)
+            //                           {
+            //                               // Hook up to an Onboard LED , just to confirm that things are alive.
+            //                               ledtoggle = !ledtoggle;
+            //                               led.Write(ledtoggle);
+            //                               Thread.Sleep(200);
+            //                           }
+            //                       };
+            //new Thread(ledBlink).Start();
 
             var cube = new Cube(6, tlc5940);
             button.OnInterrupt += (port, data, time) =>
