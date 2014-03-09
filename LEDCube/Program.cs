@@ -38,7 +38,7 @@ namespace LEDCube
             //                       };
             //new Thread(ledBlink).Start();
 
-            var cube = new Cube(6, tlc5940);
+            var cube = new Cube(tlc5940);
            
             cube.Start();
 

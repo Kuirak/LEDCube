@@ -110,13 +110,6 @@ namespace LEDCube
             XLATpin = LATCHport;
             ValidateChannelCount(channelCount);
             writeBuffer = CreateBuffer(channelCount);
-            dataBuffer = CreateBuffer(channelCount);
-            oneBuffer = CreateBuffer(channelCount);
-            zeroBuffer = CreateBuffer(channelCount);
-            for (int index = 0; index < oneBuffer.Length; index++)
-            {
-                oneBuffer[index] = byte.MaxValue;
-            }
             // Clear the channels, and disable the output
             GSCLKPin.SetDutyCycle(0);
             BLANKPin.SetDutyCycle(0);
@@ -124,9 +117,9 @@ namespace LEDCube
 
             GSCLKPin.SetPulse(gsclk_period, 1);
             //BLANKPin.SetPulse((gsclk_period * 4096), 1);
-            BLANKPin.SetPulse((gsclk_period + 1)*(4096/2), 1);
-            AllOne();
-            Reset();
+            BLANKPin.SetPulse((gsclk_period)*(4096/2), 1);
+            //BLANKPin.SetPulse((gsclk_period + 1)*(4096/2), 1);
+            
             // THis is the arduino formula:
         }
 
@@ -181,13 +174,7 @@ namespace LEDCube
         //byte[] DataBuffer = new byte[48]; // = 32 channels * 12 bits
         // 
         
-        private byte[] dataBuffer;
-
         private byte[] writeBuffer;
-
-        private readonly byte[] oneBuffer;
-        private readonly byte[] zeroBuffer;
-
         #endregion
 
         #region Data access
@@ -195,47 +182,53 @@ namespace LEDCube
         /// <summary>
         /// Reset the buffer and update the tlcs
         /// </summary>
-        public void Reset()
-        {
-            writeBuffer = zeroBuffer;
-        }
+        //public void Reset()
+        //{
+        //    writeBuffer = zeroBuffer;
+            
+        //}
         
        
-        /// <summary>
-        /// Reset the buffer and update the tlcs
-        /// </summary>
-        public void AllOne()
-        {
-            writeBuffer = oneBuffer;
-            UpdateChannel();
-        }
+        ///// <summary>
+        ///// Reset the buffer and update the tlcs
+        ///// </summary>
+        //public void AllOne()
+        //{
+        //    writeBuffer = oneBuffer;
+            
+        //}
 
-        public void Push()
+        public void PushBuffer(byte[] buffer)
         {
             //Update write buffer with databuffer and Push
-            writeBuffer = dataBuffer;
-            UpdateChannel();
+            writeBuffer = buffer;
+            Write();
         }
 
+
+
+        public void Write()
+        {
+            SPIBus.Write(writeBuffer);
+        }
 
         /// <summary>
         /// Send the current data buffer to the device.
         /// </summary>
-        public void UpdateChannel()
+        public void Confirm()
         {
-            if (useSPIInterface)
-            {
-                SPIBus.Write(writeBuffer);
-            }
             // pull down the PWM drivers
-            //BLANKPin.SetPulse(10, 10); <-
+            BLANKPin.SetPulse(10, 10); 
 
             // push the data from the input buffer on the TLC to the internal registers
-
+            
             XLATpin.Write(true);
+            Thread.Sleep(3);
             XLATpin.Write(false);
+            //GSCLKPin.SetPulse(gsclk_period, 1);
+           
             //BLANKPin.SetPulse((gsclk_period * 4096), 1);
-
+            BLANKPin.SetPulse((gsclk_period) * (4096 / 2), 1);
             // push the PWM drivers back up
 
             // THis is the arduino formula:
@@ -251,7 +244,7 @@ namespace LEDCube
         /// <param name="channel"></param>
         /// <param name="value"></param>
         /// <param name="buffer"></param>
-        public static void WriteTo12BitBuffer(uint channel, uint value, byte[] buffer,uint channelCount)
+        public static void WriteTo12BitBuffer(uint channel, uint value, byte[] buffer, uint channelCount)
         {
             uint numberOfChannels = channelCount;
 
@@ -285,6 +278,24 @@ namespace LEDCube
                 throw new InvalidChannelException(channel);
             }
         }
+
+        /*
+        private void UpdateGreyScaleBufferFromLEDData()
+        {
+            int baseIndex = _greyScaleBuffer.Length;
+            for (int index = 0; index < (_greyScaleData.Length / 2); index++)
+            {
+                ushort led0 = _greyScaleData[index * 2];
+                ushort led1 = _greyScaleData[(index * 2) + 1];
+
+                baseIndex -= 3;
+                _greyScaleBuffer[baseIndex + 2] = (byte) (led0 & 0xff);
+                _greyScaleBuffer[baseIndex + 1] = (byte) (((led1 & 0x0f) << 4) | ((led0 & 0xf00) >> 8));
+                _greyScaleBuffer[baseIndex] = (byte) (led1 >> 4);
+            }
+        }
+         */
+
 
         public static byte[] CreateBuffer(uint channelCount)
         {

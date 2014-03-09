@@ -5,7 +5,7 @@ namespace LEDCube
 {
     public static class Extensions
     {
-        public static uint Clamp(this uint value, uint min, uint max)
+        public static float Clamp(this float value, float min, float max)
         {
             return (value < min) ? min : (value > max) ? max : value;
         }

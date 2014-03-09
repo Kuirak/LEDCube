@@ -5,16 +5,16 @@ using Microsoft.SPOT;
 
 namespace LEDCube
 {
-    public class Led
+    public struct Led
     {
         /// <summary>
         /// Validate that the given value is between 0 and 100
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static uint Validate(uint value)
+        public static float Validate(float value)
         {
-            return value.Clamp(0, 100);
+            return value.Clamp(0, 1);
         }
 
         /// <summary>
@@ -24,7 +24,7 @@ namespace LEDCube
         /// <returns></returns>
         public static uint ConvertToTlc(float value)
         {
-            return (uint)(4095 * value / 100.0);
+            return (uint)(4095 * value);
         }
 
 
@@ -32,21 +32,21 @@ namespace LEDCube
         public uint Red
         {
             get { return red; }
-            set { red = ConvertToTlc(Validate(value)); }
-        } 
+           private set { red = value; }
+        }
 
         private uint green;
         public uint Green
         {
             get { return green; }
-            set { green = ConvertToTlc(Validate(value)); }
-        } 
+           private set { green = value; }
+        }
 
         private uint blue;
         public uint Blue
         {
             get { return blue; }
-            set { blue = ConvertToTlc(Validate(value)); }
+            private set { blue =value; }
         }
 
         /// <summary>
@@ -63,7 +63,7 @@ namespace LEDCube
         /// </summary>
         public void On()
         {
-            Set(100, 100, 100);
+            Set(1, 1, 1);
             
         }
         
@@ -74,25 +74,25 @@ namespace LEDCube
         /// <param name="r">Red Color value</param>
         /// <param name="g">Green Color value</param>
         /// <param name="b">Blue Color value</param>
-        public void Set(uint r, uint g, uint b)
+        public void Set(float r, float g, float b)
         {
-            Red = r;
-            Green = g;
-            Blue = b;
+            Red = ConvertToTlc(Validate(r));
+            Green = ConvertToTlc(Validate(g));
+            Blue = ConvertToTlc(Validate(b));
 
         }
 
         //convert to computed values
-        public readonly uint redIndex;
-        public readonly uint greenIndex;
-        public readonly uint blueIndex;
+        public readonly uint RedIndex;
+        public uint GreenIndex{get { return RedIndex +1; }}
+        public uint BlueIndex { get { return RedIndex + 2; } }
 
         public Led(uint startIndex)
         {
-            redIndex = startIndex;
-            greenIndex = (redIndex + 1);
-            blueIndex = (greenIndex + 1);
-            
+            RedIndex = startIndex;
+            red = 0;
+            green = 0;
+            blue = 0;
         }
     }
 }

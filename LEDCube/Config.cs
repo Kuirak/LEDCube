@@ -13,22 +13,23 @@ namespace LEDCube
         public static SPI.Configuration Device;
         public static PWM Blank;
         public static PWM Gsclk;
-        public static OutputPort[] Layers;
+        public static OutputPort[] LayerPorts;
         public static uint TlcChannelCount;
+        public static uint SideLength;
 
         static Config()
         {
             Latch = new OutputPort(Pins.GPIO_PIN_D9, false);
             Device = new SPI.Configuration(
-                Pins.GPIO_PIN_D8, // SS-pin                          = slave select, not used
-                false, // SS-pin active state
-                0, // The setup time for the SS port
-                0, // The hold time for the SS port     
-                false, // The idle state of the clock
-                true, // The sampling clock edge
-                30000,
+                ChipSelect_Port: Pins.GPIO_NONE, // SS-pin                          = slave select, not used
+                ChipSelect_ActiveState: false, // SS-pin active state
+                ChipSelect_SetupTime: 0, // The setup time for the SS port
+                ChipSelect_HoldTime: 0, // The hold time for the SS port     
+                Clock_IdleState: true, // The idle state of the clock
+                Clock_Edge: true, // The sampling clock edge
+                Clock_RateKHz: 30000,
                 // The SPI clock rate in KHz         ==> enough to start with, let's see how high we can take this later on
-                SPI_Devices.SPI1
+                SPI_mod: SPI.SPI_module.SPI1
                 // The used SPI bus (refers to a MOSI MISO and SCLK pinset)   => default pins, also the ones used on the pwm shield
                 // specifically: sin = 11, (netduino send, tlc in) and sclck = 13
                 );
@@ -37,7 +38,7 @@ namespace LEDCube
             Blank = new PWM(Pins.GPIO_PIN_D10);
             Gsclk = new PWM(Pins.GPIO_PIN_D6);
             
-            Layers=new[]
+            LayerPorts=new[]
                          {
                              new OutputPort(Pins.GPIO_PIN_D5, false),
                              new OutputPort(Pins.GPIO_PIN_D4, false),
@@ -46,7 +47,9 @@ namespace LEDCube
                              new OutputPort(Pins.GPIO_PIN_D1, false),
                              new OutputPort(Pins.GPIO_PIN_D0, false)
                          };
-            TlcChannelCount = 112;
+            SideLength = 6;
+            TlcChannelCount = 112; 
+           
         }
 
 
