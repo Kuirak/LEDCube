@@ -9,15 +9,14 @@ using Math = System.Math;
 
 namespace LEDCube
 {
-    public class Tlc5940 
+    public class Tlc5940
     {
-
         /// <summary>
         /// Illegal channel number, should be between 0 and 15 inclusive.
         /// </summary>
         public class InvalidChannelException : Exception
         {
-            public InvalidChannelException(uint n) 
+            public InvalidChannelException(uint n)
                 : base("Channel number is out of bounds: " + n)
             {
             }
@@ -64,10 +63,6 @@ namespace LEDCube
          * 
          * This is how I connect things:
          * 
-         * 
-         * 
-         * 
-         * 
          * \\todo: allow explicit configuration of the feeding PWM trains timing config
          * 
          * Not taken care of in this version:
@@ -79,7 +74,7 @@ namespace LEDCube
 
         public uint ValidateChannelCount(uint value)
         {
-            if (value % SINGLE_TLC_CHANNEL_COUNT == 0)
+            if (value%SINGLE_TLC_CHANNEL_COUNT == 0)
             {
                 return value;
             }
@@ -88,10 +83,9 @@ namespace LEDCube
 
         #region C'tors
 
-        public Tlc5940(uint channelCount)
-            : this(Config.Device, Config.Gsclk, Config.Blank, Config.Latch, channelCount)
+        public Tlc5940()
+            : this(Config.Device, Config.Gsclk, Config.Blank, Config.Latch, Config.TlcChannelCount)
         {
-            
         }
 
         /// <summary>
@@ -104,7 +98,7 @@ namespace LEDCube
         /// <param name="PWMChannel2">Channel for the BLANK pin</param>
         /// <param name="LATCHpin">Required output channel</param>
         /// <param name="channelCount">Must be max Channelcount provided by the Tlc5940</param>
-        public Tlc5940(SPI.Configuration config, PWM gsclk, PWM blank, OutputPort LATCHport,uint channelCount)
+        public Tlc5940(SPI.Configuration config, PWM gsclk, PWM blank, OutputPort LATCHport, uint channelCount)
         {
             useSPIInterface = true;
 
@@ -114,16 +108,14 @@ namespace LEDCube
             GSCLKPin = gsclk;
             BLANKPin = blank;
             XLATpin = LATCHport;
-            this.channelCount = ValidateChannelCount(channelCount);
-            var bufferSize = (this.channelCount*12)/8; 
-            Debug.Print("DataBuffer size:" +bufferSize);
-            writeBuffer = new byte[bufferSize];
-            dataBuffer = new byte[bufferSize];
-            OneBuffer =(byte[]) dataBuffer.Clone();
-            ZeroBuffer =(byte[]) dataBuffer.Clone();
-            for (int index = 0; index < OneBuffer.Length; index++)
+            ValidateChannelCount(channelCount);
+            writeBuffer = CreateBuffer(channelCount);
+            dataBuffer = CreateBuffer(channelCount);
+            oneBuffer = CreateBuffer(channelCount);
+            zeroBuffer = CreateBuffer(channelCount);
+            for (int index = 0; index < oneBuffer.Length; index++)
             {
-               OneBuffer[index] =byte.MaxValue;
+                oneBuffer[index] = byte.MaxValue;
             }
             // Clear the channels, and disable the output
             GSCLKPin.SetDutyCycle(0);
@@ -132,12 +124,10 @@ namespace LEDCube
 
             GSCLKPin.SetPulse(gsclk_period, 1);
             //BLANKPin.SetPulse((gsclk_period * 4096), 1);
-            BLANKPin.SetPulse((gsclk_period + 1) * (4096 / 2), 1);
+            BLANKPin.SetPulse((gsclk_period + 1)*(4096/2), 1);
             AllOne();
             Reset();
             // THis is the arduino formula:
-            
-        
         }
 
         //public Tlc5940(PWM gsclk, PWM blank, OutputPort xlat, OutputPort sin, OutputPort sclk)
@@ -157,31 +147,29 @@ namespace LEDCube
 
         //    GSCLKPin.SetPulse(gsclk_period, 1);
         //    BLANKPin.SetPulse((gsclk_period * 4096), 1);
-        
-        //}
 
+        //}
 
         #endregion
 
         #region Properties
 
         private readonly bool useSPIInterface;
-        
+
         // spi:
-        SPI.Configuration SPIDevice;
-        readonly SPI SPIBus;
+        private SPI.Configuration SPIDevice;
+        private readonly SPI SPIBus;
 
         // direct writing
         // OutputPort SINPin;
         // OutputPort SCLKPin;
 
         // for both configs:
-        PWM BLANKPin;
-        PWM GSCLKPin;
-        readonly OutputPort XLATpin;
-        private readonly uint channelCount;
-        uint gsclk_period = 2;
-        
+        private PWM BLANKPin;
+        private PWM GSCLKPin;
+        private readonly OutputPort XLATpin;
+        private uint gsclk_period = 2;
+
 
         /// <summary>
         /// Packed array of the channel data.
@@ -191,72 +179,105 @@ namespace LEDCube
         /// </summary>
         //byte[] DataBuffer = new byte[24]; // = 16 channels * 12 bits
         //byte[] DataBuffer = new byte[48]; // = 32 channels * 12 bits
-        byte[] dataBuffer; // = 32 channels * 12 bits
+        // 
+        
+        private byte[] dataBuffer;
+
         private byte[] writeBuffer;
-        private byte[] OneBuffer;
-        private byte[] ZeroBuffer;
+
+        private readonly byte[] oneBuffer;
+        private readonly byte[] zeroBuffer;
+
         #endregion
 
-
         #region Data access
+
         /// <summary>
         /// Reset the buffer and update the tlcs
         /// </summary>
         public void Reset()
         {
-            writeBuffer = ZeroBuffer;
-            UpdateChannel();
-        } 
+            writeBuffer = zeroBuffer;
+        }
+        
+       
         /// <summary>
         /// Reset the buffer and update the tlcs
         /// </summary>
         public void AllOne()
         {
-            writeBuffer = OneBuffer;
+            writeBuffer = oneBuffer;
             UpdateChannel();
         }
 
         public void Push()
         {
-            writeBuffer =(byte[]) dataBuffer.Clone();
-            dataBuffer = (byte[]) OneBuffer.Clone();
+            //Update write buffer with databuffer and Push
+            writeBuffer = dataBuffer;
             UpdateChannel();
-        } 
-        
+        }
 
+
+        /// <summary>
+        /// Send the current data buffer to the device.
+        /// </summary>
+        public void UpdateChannel()
+        {
+            if (useSPIInterface)
+            {
+                SPIBus.Write(writeBuffer);
+            }
+            // pull down the PWM drivers
+            //BLANKPin.SetPulse(10, 10); <-
+
+            // push the data from the input buffer on the TLC to the internal registers
+
+            XLATpin.Write(true);
+            XLATpin.Write(false);
+            //BLANKPin.SetPulse((gsclk_period * 4096), 1);
+
+            // push the PWM drivers back up
+
+            // THis is the arduino formula:
+            //BLANKPin.SetPulse((gsclk_period + 1) * (4096 / 2), 1);
+
+            // This is my formula. No offense, but it behaves good for me! An offset of even 1 on the total period makes the 
+            // output flicker!!! The combination 3 and 8192 definitely gives bad flickering results.
+        }
 
         /// <summary>
         /// Write data. Use the lowest 12 bits of value, rest is ignored.
         /// </summary>
         /// <param name="channel"></param>
         /// <param name="value"></param>
-        public void SetValue(uint channel, uint value)
+        /// <param name="buffer"></param>
+        public static void WriteTo12BitBuffer(uint channel, uint value, byte[] buffer,uint channelCount)
         {
             uint numberOfChannels = channelCount;
 
-            if ((channel <= numberOfChannels-1))
+            if ((channel <= numberOfChannels - 1))
             {
                 // We need to feed in the MSB from the highest channel first. If we map the data byte by byte, it will work
                 // like this: 
                 uint channelIndex = (numberOfChannels - 1) - channel;
 
                 // even channels = byte + halfbyte, odd channels = halfbyte + byte
-                uint set = channelIndex / 2;
-                uint offset = channelIndex % 2;  // even: offset 0, odd: offset 1
-                uint bufferPointer = set * 3;
+                uint set = channelIndex/2;
+                uint offset = channelIndex%2; // even: offset 0, odd: offset 1
+                uint bufferPointer = set*3;
 
                 // Mask out bits to write
                 uint writeVal = value & 0xFFF;
 
                 if (offset == 0)
                 {
-                    dataBuffer[3 * set] = (byte)(writeVal >> 4);
-                    dataBuffer[3 * set + 1] = (byte)(((writeVal & 0xF) << 4) + (dataBuffer[3 * set + 1] & 0xF));
+                    buffer[3*set] = (byte) (writeVal >> 4);
+                    buffer[3*set + 1] = (byte) (((writeVal & 0xF) << 4) + (buffer[3*set + 1] & 0xF));
                 }
                 else
                 {
-                    dataBuffer[3 * set + 1] = (byte)((writeVal >> 8) + (dataBuffer[3 * set + 1] & 0xF0));
-                    dataBuffer[3 * set + 2] = (byte)(writeVal & 0xFF);
+                    buffer[3*set + 1] = (byte) ((writeVal >> 8) + (buffer[3*set + 1] & 0xF0));
+                    buffer[3*set + 2] = (byte) (writeVal & 0xFF);
                 }
             }
             else
@@ -265,53 +286,12 @@ namespace LEDCube
             }
         }
 
-        /// <summary>
-        /// Return a copy of the data array, for testing purposes.
-        /// </summary>
-        /// <returns></returns>
-        public byte[] ShowBuffer()
+        public static byte[] CreateBuffer(uint channelCount)
         {
-            return (byte[]) dataBuffer.Clone();
-        }
-
-        
-
-
-        /// <summary>
-        /// Send the current data buffer to the device.
-        /// </summary>
-        public void UpdateChannel()
-        {
-
-           
-            
-            if (useSPIInterface)
-            {
-                SPIBus.Write(writeBuffer);
-            }
-           
-
-            // pull down the PWM drivers
-            //BLANKPin.SetPulse(10, 10); <- 
-
-            // push the data from the input buffer on the TLC to the internal registers
-
-            XLATpin.Write(true);
-            XLATpin.Write(false);
-            //BLANKPin.SetPulse((gsclk_period * 4096), 1);
-            
-            // push the PWM drivers back up
-
-            // THis is the arduino formula:
-            //BLANKPin.SetPulse((gsclk_period + 1) * (4096 / 2), 1);
-
-            // This is my formula. No offense, but it behaves good for me! An offset of even 1 on the total period makes the 
-            // output flicker!!! The combination 3 and 8192 definitely gives bad flickering results.
-            
-            
+            var bufferSize = (channelCount*12)/8;
+            return new byte[bufferSize];
         }
 
         #endregion
-
     }
 }

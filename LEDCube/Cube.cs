@@ -11,17 +11,7 @@ namespace LEDCube
     {
         private readonly Tlc5940 tlc5940;
         private readonly Layer[] layers;
-
-        private uint currentLayer;
-        public uint CurrentLayer
-        {
-            get { return currentLayer; }
-            set
-            {
-                layers[currentLayer].Off();
-                currentLayer = value.Repeat(0,(uint)layers.Length-1);
-            }
-        }
+  
 
         public Cube(uint sideLength,Tlc5940 tlc5940)
         {
@@ -35,28 +25,23 @@ namespace LEDCube
             }
         }
 
+
         public void Start()
         {
-            uint currentLed = 0;
-            var rand = new Random();
             while (true)
             {
-                
+                //if(frame.ready)
+                // setcurrentlayerbuffers
 
                 for (int index = 0; index < layers.Length; index++)
                 {
-                    
-                    tlc5940.Reset();
-                    tlc5940.AllOne();
-                    layers[index].Port.Write(true);
-                    //uint x = (uint) rand.Next(6);
-                    //uint y = (uint) rand.Next(6);
-                    //var r = ((uint) rand.Next(100)).Clamp(25,100);
-                    //var g = ((uint)rand.Next(100)).Clamp(25, 100);
-                    //var b = ((uint)rand.Next(100)).Clamp(25, 100);
-                    //layer.GetLed(x, y).Set(r,g,b);
+                    //Set current layer buffer and 
+                    tlc5940.Reset(); // set all zero
+                    tlc5940.AllOne(); //set all one and write to tlc
+
+                    layers[index].Port.Write(true); //layer on
                     Thread.Sleep(1);
-                    layers[index].Port.Write(false);
+                    layers[index].Port.Write(false); //layer off
                 }
             }
         }
@@ -73,93 +58,8 @@ namespace LEDCube
         {
             var layer = layers[z];
             var led = layer.GetLed(x, y);
-            led.SetAndApplyToBuffer(r,g,b);
+            led.Set(r,g,b);
         }
     }
-
-    public class Layer
-    {
-        private readonly uint sideLength;
-        public readonly OutputPort Port;
-        private readonly Tlc5940 tlc5940;
-        public  Led[] Leds;
-        public Layer(uint sideLength, OutputPort port, Tlc5940 tlc5940)
-        {
-            this.sideLength = sideLength;
-            this.Port = port;
-            this.tlc5940 = tlc5940;
-            var channelCount = sideLength * sideLength * 3;
-            var leds = new ArrayList();
-            
-            for (uint i = 0; i < channelCount; i += 3)
-            {
-                leds.Add(new Led(i, tlc5940));
-            }
-            Leds = (Led[]) leds.ToArray(typeof (Led));
-        }
-
-        public void On()
-        {
-            Port.Write(true);
-        }
-
-        public void Push()
-        {
-            foreach (var led in Leds)
-            {
-                led.SetValues();
-                led.Off();
-            }
-            tlc5940.UpdateChannel();
-        }
-
-        public void Off()
-        {
-            Port.Write(false);
-        }
-
-        public void AllLedsOn()
-        {
-            foreach (var led in Leds)
-            {
-                led.On();
-                led.SetValues();
-            }
-            Push();
-        }
- 
-        public void AllLedsOff()
-        {
-            foreach (var led in Leds)
-            {
-                led.Off();
-                led.SetValues();
-            }
-            Push();
-        }
-
-        public void SetAllLedsColor(uint red,uint green,uint blue)
-        {
-            foreach (var led in Leds)
-            {
-                led.Set(red,green,blue);
-                led.SetValues();
-            }
-            Push();
-        }
-        /// <summary>
-        /// Get Led by zerobased X and Y coord
-        /// </summary>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
-        /// <returns></returns>
-        public Led GetLed(uint x,uint y)
-        {
-            var index = x*sideLength + y;
-            return Leds[index];
-        }
-    }
-
-  
 
 }

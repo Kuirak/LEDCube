@@ -14,5 +14,15 @@ namespace LEDCube
         {
             return value < start ? end : (value > end ? start : value);
         }
+
+        public static byte[] Reset(this byte[] value )
+        {
+            for (int i = 0; i < value.Length; i++)
+            {
+                value[i] = 0;
+            }
+            return value;
+        }
+
     }
 }

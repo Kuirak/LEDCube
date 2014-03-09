@@ -14,6 +14,7 @@ namespace LEDCube
         public static PWM Blank;
         public static PWM Gsclk;
         public static OutputPort[] Layers;
+        public static uint TlcChannelCount;
 
         static Config()
         {
@@ -45,6 +46,7 @@ namespace LEDCube
                              new OutputPort(Pins.GPIO_PIN_D1, false),
                              new OutputPort(Pins.GPIO_PIN_D0, false)
                          };
+            TlcChannelCount = 112;
         }
 
 

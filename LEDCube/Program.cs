@@ -20,8 +20,8 @@ namespace LEDCube
             
            
             var button = new InterruptPort(Pins.ONBOARD_SW1, true, Port.ResistorMode.Disabled, Port.InterruptMode.InterruptEdgeBoth);
-            
-            var tlc5940 = new Tlc5940(112);
+
+            var tlc5940 = new Tlc5940();
             //Tlc5940.Tlc5940 PwmDevice = new Tlc5940.Tlc5940(gsclk, blank, latch, sin, sclk);
            
             //ThreadStart ledBlink = () =>
@@ -39,15 +39,7 @@ namespace LEDCube
             //new Thread(ledBlink).Start();
 
             var cube = new Cube(6, tlc5940);
-            button.OnInterrupt += (port, data, time) =>
-                                  {
-                                      button.DisableInterrupt();
-                                      if (data == 1)
-                                      {
-                                          cube.CurrentLayer++;
-                                      }
-                                      button.EnableInterrupt();
-                                  } ;
+           
             cube.Start();
 
             
