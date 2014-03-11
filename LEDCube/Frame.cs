@@ -5,7 +5,7 @@ namespace LEDCube
 {
     public class Frame
     {
-        private byte[][] LayerBuffers12Bit;
+        public byte[][] LayerBuffers12Bit;
         public bool IsReady = false;
 
         public Frame()
@@ -18,7 +18,10 @@ namespace LEDCube
             }
         }
 
-        
-
+        //public byte[] this[int index]
+        //{
+        //    get { return LayerBuffers12Bit[index]; }
+        //    set { LayerBuffers12Bit[index] =value; }
+        //}
     }
 }

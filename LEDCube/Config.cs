@@ -34,7 +34,7 @@ namespace LEDCube
                 // specifically: sin = 11, (netduino send, tlc in) and sclck = 13
                 );
             // better to pass in the pins, and let the ports and pwms be managed insode the device
-
+           
             Blank = new PWM(Pins.GPIO_PIN_D10);
             Gsclk = new PWM(Pins.GPIO_PIN_D6);
             

@@ -7,6 +7,7 @@ using System.Threading;
 using Math = System.Math;
 
 
+
 namespace LEDCube
 {
     public class Tlc5940
@@ -114,7 +115,6 @@ namespace LEDCube
             GSCLKPin.SetDutyCycle(0);
             BLANKPin.SetDutyCycle(0);
             XLATpin.Write(false);
-
             GSCLKPin.SetPulse(gsclk_period, 1);
             //BLANKPin.SetPulse((gsclk_period * 4096), 1);
             BLANKPin.SetPulse((gsclk_period)*(4096/2), 1);
@@ -198,7 +198,7 @@ namespace LEDCube
             
         //}
 
-        public void PushBuffer(byte[] buffer)
+        public void PushBuffer( ref byte[] buffer)
         {
             //Update write buffer with databuffer and Push
             writeBuffer = buffer;
@@ -225,6 +225,7 @@ namespace LEDCube
             XLATpin.Write(true);
             Thread.Sleep(3);
             XLATpin.Write(false);
+           
             //GSCLKPin.SetPulse(gsclk_period, 1);
            
             //BLANKPin.SetPulse((gsclk_period * 4096), 1);

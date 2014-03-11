@@ -34,6 +34,7 @@
   </PropertyGroup>
   <Import Project="$(NetMfTargetsBaseDir)$(TargetFrameworkVersion)\CSharp.Targets" />
   <ItemGroup>
+    <Compile Include="Animation.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="Cube.cs" />
     <Compile Include="Extensions.cs" />

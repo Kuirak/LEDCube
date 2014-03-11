@@ -1,29 +1,35 @@
 ﻿using System.Collections;
+using System.Threading;
 
 namespace LEDCube
 {
     public class LedLayer
     {
+        public readonly int index;
         public Led[] Leds;
+       
 
-        public LedLayer()
+        public LedLayer(int index)
         {
+            this.index = index;
             var leds = new ArrayList();
-
             uint usedChannelCount = Config.SideLength*Config.SideLength*3; // * 3 cause of rgb
+            var LedIndex = 0;
             for (uint i = 0; i < usedChannelCount; i += 3)
             {
-                leds.Add(new Led(i));
+                leds.Add(new Led(i,this,LedIndex));
+                LedIndex++;
             }
             Leds = (Led[]) leds.ToArray(typeof (Led));
         }
 
 
-        public void WriteBufferFromLeds(byte[] buffer)
+        public void WriteBufferFromLeds( ref byte[] buffer)
         {
             foreach (var led in Leds)
             {
-                SetValues(led,buffer);
+                SetValues(led,ref buffer);
+                Thread.Sleep(1);
             }
         }
 
@@ -36,7 +42,7 @@ namespace LEDCube
         }
 
 
-        private static void SetValues(Led led, byte[] buffer)
+        private static void SetValues(Led led, ref byte[] buffer)
         {
             TransferTo12BitBuffer(led.RedIndex, led.Red, buffer);
             TransferTo12BitBuffer(led.GreenIndex, led.Green, buffer );
@@ -55,10 +61,10 @@ namespace LEDCube
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <returns></returns>
-        public Led GetLed(uint x, uint y)
+        public Led GetLed(int x, int y)
         {
-            var index = x * Config.SideLength + y;
-            return Leds[index];
+            
+            return Leds[x * Config.SideLength + y];
         }
     }
 }

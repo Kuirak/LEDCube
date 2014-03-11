@@ -5,8 +5,11 @@ using Microsoft.SPOT;
 
 namespace LEDCube
 {
-    public struct Led
+    public class Led
     {
+        public readonly LedLayer layer;
+        public readonly int index;
+
         /// <summary>
         /// Validate that the given value is between 0 and 100
         /// </summary>
@@ -87,8 +90,10 @@ namespace LEDCube
         public uint GreenIndex{get { return RedIndex +1; }}
         public uint BlueIndex { get { return RedIndex + 2; } }
 
-        public Led(uint startIndex)
+        public Led(uint startIndex, LedLayer layer,int index)
         {
+            this.layer = layer;
+            this.index = index;
             RedIndex = startIndex;
             red = 0;
             green = 0;
