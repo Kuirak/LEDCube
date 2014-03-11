@@ -103,6 +103,7 @@ namespace LEDCube
                 if (newDropTimer >= newDropTime)
                 {
                     var newDropCount = rand.Next(10).Clamp(2,10);
+                    
                     newDropTimer = 0;
                     for (int i = 0; i < newDropCount; i++)
                     {
@@ -114,13 +115,12 @@ namespace LEDCube
                         Thread.Sleep(1);
                         led.Set(0, 0.1f, 1);
                         drops.Add(led);
-                        Debug.Print("new Drop at " + x + "," + y);
+                        
                     }
                     
                 }
                 
                 WriteBuffer();
-                Thread.Sleep(10);
                 NextFrameIsReady = true;
             }
         }
