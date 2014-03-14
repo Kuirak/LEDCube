@@ -49,7 +49,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Comm\CommPort.cs" />
+    <Compile Include="SerialPortHelper.cs" />
     <Compile Include="TLC5940\Tlc5940.cs" />
   </ItemGroup>
   <ItemGroup>
