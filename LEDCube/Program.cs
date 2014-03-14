@@ -1,76 +1,70 @@
 ﻿using System;
 using System.Threading;
+
 using Microsoft.SPOT;
 using Microsoft.SPOT.Hardware;
 using SecretLabs.NETMF.Hardware;
 using SecretLabs.NETMF.Hardware.Netduino;
 
 
+
 namespace LEDCube
 {
     public class Program
     {
-
-        static uint row = 0;
-        static uint rowLength = 18;
+        static readonly SerialPortHelper SerialPortHelper = new SerialPortHelper();
+    
         public static void Main()
         {
-            //OutputPort sin = new OutputPort(Pins.GPIO_PIN_D11, false);
-            //OutputPort sclk = new OutputPort(Pins.GPIO_PIN_D13, false);
+            
             
            
             var button = new InterruptPort(Pins.ONBOARD_SW1, true, Port.ResistorMode.Disabled, Port.InterruptMode.InterruptEdgeBoth);
 
             var tlc5940 = new Tlc5940();
-            //Tlc5940.Tlc5940 PwmDevice = new Tlc5940.Tlc5940(gsclk, blank, latch, sin, sclk);
-           
-            //ThreadStart ledBlink = () =>
-            //                       {
-            //                           var ledtoggle = true;
-            //                           var led = new OutputPort(Pins.ONBOARD_LED, false);
-            //                           while (true)
-            //                           {
-            //                               // Hook up to an Onboard LED , just to confirm that things are alive.
-            //                               ledtoggle = !ledtoggle;
-            //                               led.Write(ledtoggle);
-            //                               Thread.Sleep(200);
-            //                           }
-            //                       };
-            //new Thread(ledBlink).Start();
+            
             var anim = new Animation();
             var cube = new Cube(tlc5940,anim);
 
             ThreadStart animThreadStart = anim.Rain;
-            var animThread = new Thread(animThreadStart);
-
+           
+            var animThread = new Thread(animThreadStart) {Priority = ThreadPriority.Lowest};
             ThreadStart tlcThreadStart = cube.Start;
-            var tlcThread = new Thread(tlcThreadStart);
+            var tlcThread = new Thread(tlcThreadStart) {Priority = ThreadPriority.Highest};
             tlcThread.Start();
             animThread.Start();
 
-            
 
+            new Thread(() =>
+            {
+                SerialPortHelper.PrintLine("");
+                SerialPortHelper.PrintLine("r");
+
+                while (true)
+                {
+                    string line = SerialPortHelper.ReadLine();
+                    if (line.Length > 0)
+                    {
+                        if (line == "r")
+                        {
+                            SerialPortHelper.PrintLine("s");
+                            continue;
+                        }
+                        if (line == "f")
+                        {
+                            continue;
+                        }
+                        SerialPortHelper.PrintLine(line);
+                        if (line == "e")
+                            SerialPortHelper.PrintLine("n");
+                    }
+                }
+            }).Start();
+          
 
 
         }
 
-        //private static DateTime lastButtonTime = DateTime.Now;
-        //private static void ButtonOnOnInterrupt(uint port, uint data, DateTime time)
-        //{
-        //    if (data == 1)
-        //    {
-        //        if ((time - lastButtonTime).Milliseconds < 100)
-        //            return;
-
-        //        row++;
-        //        if (row >= rowLength)
-        //        {
-        //            row = 0;
-                    
-        //        }
-        //        Debug.Print("Current row: "+row);
-        //        lastButtonTime = time;
-        //    }
-        //}
+        
     }
 }

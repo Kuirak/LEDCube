@@ -44,8 +44,8 @@ namespace LEDCube
                              new OutputPort(Pins.GPIO_PIN_D4, false),
                              new OutputPort(Pins.GPIO_PIN_D3, false),
                              new OutputPort(Pins.GPIO_PIN_D2, false),
-                             new OutputPort(Pins.GPIO_PIN_D1, false),
-                             new OutputPort(Pins.GPIO_PIN_D0, false)
+                             new OutputPort(Pins.GPIO_PIN_D7, false),
+                             new OutputPort(Pins.GPIO_PIN_D8, false)
                          };
             SideLength = 6;
             TlcChannelCount = 112; 
