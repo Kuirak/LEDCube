@@ -42,6 +42,7 @@ namespace LEDCube
 
                 while (true)
                 {
+                    Thread.Sleep(1);
                     string line = SerialPortHelper.ReadLine();
                     if (line.Length > 0)
                     {
@@ -52,6 +53,7 @@ namespace LEDCube
                         }
                         if (line == "f")
                         {
+                            SerialPortHelper.PrintLine("f");
                             continue;
                         }
                         SerialPortHelper.PrintLine(line);
