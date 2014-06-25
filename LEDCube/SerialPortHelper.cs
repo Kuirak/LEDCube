@@ -30,7 +30,7 @@ namespace LEDCube
         static int bufferLength = 0;
         public string lastError;
 
-        public SerialPortHelper(string portName = "COM1", int baudRate = 460800, Parity parity = Parity.None, int dataBits = 8, StopBits stopBits = StopBits.One)
+        public SerialPortHelper(string portName = "COM1", int baudRate = 250000, Parity parity = Parity.None, int dataBits = 8, StopBits stopBits = StopBits.One)
         {
             serialPort = new SerialPort(portName, baudRate, parity, dataBits, stopBits);
             //serialPort.ReadTimeout = 1; // Set to 10ms. Default is -1?!
@@ -50,9 +50,9 @@ namespace LEDCube
                     int bytesReceived = serialPort.Read(buffer, bufferLength, bufferMax - bufferLength);
                     if (bytesReceived > 0)
                     {
-                        Debug.Print("Bytes Recieved: "+ bytesReceived);
+                        //Debug.Print("Bytes Recieved: "+ bytesReceived);
                         bufferLength += bytesReceived;
-                        Debug.Print("Buffer Length: " + bufferLength);
+                        //Debug.Print("Buffer Length: " + bufferLength);
                         if (bufferLength >= bufferMax)
                             throw new ApplicationException("Buffer Overflow.  Send shorter lines, or increase lineBufferMax.");
                     }

@@ -38,7 +38,7 @@ namespace LEDCube
 
         public void NewLayerData(int layerIdx, ref byte[] data)
         {
-            Debug.Print("New layer data: "+layerIdx);
+            //Debug.Print("New layer data: "+layerIdx);
             Helper.SwapBuffers(ref data, ref cachedLayers[layerIdx].LayerBuffer12Bit);
             newData[layerIdx] = true;
             

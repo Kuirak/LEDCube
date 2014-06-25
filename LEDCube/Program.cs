@@ -20,7 +20,21 @@ namespace LEDCube
             
            
             var button = new InterruptPort(Pins.ONBOARD_SW1, true, Port.ResistorMode.Disabled, Port.InterruptMode.InterruptEdgeBoth);
+            var led=new OutputPort(Pins.ONBOARD_LED, false);
 
+            new Thread(() =>
+                   {
+                       while (true)
+                       {
+
+
+                           led.Write(true);
+                           Thread.Sleep(500);
+                           led.Write(false);
+                           Thread.Sleep(200);
+                       }
+
+                   }).Start();
             var tlc5940 = new Tlc5940();
             
             //var anim = new Animation();
