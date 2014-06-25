@@ -30,12 +30,18 @@ namespace LEDCube
         static int bufferLength = 0;
         public string lastError;
 
-        public SerialPortHelper(string portName = "COM1", int baudRate = 115200, Parity parity = Parity.None, int dataBits = 8, StopBits stopBits = StopBits.One)
+        public SerialPortHelper(string portName = "COM1", int baudRate = 460800, Parity parity = Parity.None, int dataBits = 8, StopBits stopBits = StopBits.One)
         {
             serialPort = new SerialPort(portName, baudRate, parity, dataBits, stopBits);
-            serialPort.ReadTimeout = 5; // Set to 10ms. Default is -1?!
+            //serialPort.ReadTimeout = 1; // Set to 10ms. Default is -1?!
+            serialPort.ErrorReceived += serialPort_ErrorReceived;
             serialPort.DataReceived += new SerialDataReceivedEventHandler(SerialPortDataReceived);
             serialPort.Open();
+        }
+
+        void serialPort_ErrorReceived(object sender, SerialErrorReceivedEventArgs e)
+        {
+            Debug.Print(e.ToString());
         }
 
         private void SerialPortDataReceived(object sender, SerialDataReceivedEventArgs e)
@@ -47,6 +53,7 @@ namespace LEDCube
                     int bytesReceived = serialPort.Read(buffer, bufferLength, bufferMax - bufferLength);
                     if (bytesReceived > 0)
                     {
+                        Debug.Print("Bytes Recieved: "+ bytesReceived);
                         bufferLength += bytesReceived;
                         if (bufferLength >= bufferMax)
                             throw new ApplicationException("Buffer Overflow.  Send shorter lines, or increase lineBufferMax.");
@@ -84,6 +91,32 @@ namespace LEDCube
             }
 
             return line;
+        }
+
+        public bool ReadLayer(ref byte[] layer)
+        {
+            var newData = false;
+            lock (buffer)
+            {
+                //-- Look for Return char in buffer --
+                for (int i = 0; i < bufferLength; i++)
+                {
+                    //-- Consider EITHER CR or LF as end of line, so if both were received it would register as an extra blank line. --
+                    if (buffer[i] == '\r' || buffer[i] == '\n')
+                    {
+                        newData = true;
+                        buffer[i] = 0; // Turn NewLine into string terminator
+                        Array.Copy(buffer,layer,i-1);
+                         // The "" ensures that if we end up copying zero characters, we'd end up with blank string instead of null string.
+                        //Debug.Print("LINE: <" + line + ">");
+                        bufferLength = bufferLength - i - 1;
+                        Array.Copy(buffer, i + 1, buffer, 0, bufferLength); // Shift everything past NewLine to beginning of buffer
+                        break;
+                    }
+                }
+            }
+            return newData;
+
         }
 
         public void Print( string line )

@@ -17,13 +17,7 @@ namespace LEDCube
         public Cube(Tlc5940 tlc5940,Animation anim)
         {
             this.tlc5940 = tlc5940;
-            layers= new Layer[Config.SideLength];
-           
-            for (int i = 0; i < layers.Length; i++)
-            {
-                layers[i] = new Layer(Config.LayerPorts[i]);
-                
-            }
+            layers = Helper.CreateLayers();
             animation = anim;
             //LedLayers[0].SetAllLedsColor(0,0,0);
             //LedLayers[1].SetAllLedsColor(1,0.5f,0);
@@ -38,6 +32,7 @@ namespace LEDCube
         }
 
 
+
         public void Start()
         {
             while (true)
@@ -46,42 +41,17 @@ namespace LEDCube
                 {
                     for (int i = 0; i < layers.Length; i++)
                     {
-                        swapBuffers(ref animation.Frame.LayerBuffers12Bit[i],ref layers[i].LayerBuffer12Bit);
+                        Helper.SwapBuffers(ref animation.Frame.LayerBuffers12Bit[i],ref layers[i].LayerBuffer12Bit);
                     }
                     animation.NextFrameIsReady = false;
                 }
                 // setcurrentlayerbuffers
 
-                for (int index = 0; index < layers.Length; index++)
-                {
-                    var layer = layers[index];
-                    tlc5940.PushBuffer(ref layer.LayerBuffer12Bit);
-                    
-                    var previousIndex = index - 1;
-                    if (previousIndex < 0)
-                    {
-                        previousIndex = layers.Length - 1;
-                    }
-                    
-                    //layer-1 off
-                    layers[previousIndex].Off();
-                    //confirm
-                    tlc5940.Confirm();
-                    
-                    //layer on
-                    layer.On();
-                    
-                    Thread.Sleep(1);
-                }
+               Helper.CycleLayers(layers,tlc5940);
             }
         }
 
-        private void swapBuffers( ref byte[] newBuffer,ref byte[] currentBuffer)
-        {
-            var old = currentBuffer;
-            currentBuffer = newBuffer;
-            newBuffer = old;
-        }
+       
     }
 
 }

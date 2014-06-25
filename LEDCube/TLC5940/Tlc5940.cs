@@ -201,8 +201,9 @@ namespace LEDCube
         public void PushBuffer( ref byte[] buffer)
         {
             //Update write buffer with databuffer and Push
-            writeBuffer = buffer;
-            Write();
+                writeBuffer = buffer;
+                Write();
+            
         }
 
 

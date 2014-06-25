@@ -5,6 +5,8 @@ using Microsoft.SPOT;
 
 namespace LEDCube
 {
+  
+
     public class Animation
     {
         private readonly LedLayer[] LedLayers;
