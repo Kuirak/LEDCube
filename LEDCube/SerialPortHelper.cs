@@ -25,7 +25,7 @@ namespace LEDCube
     {
         static SerialPort serialPort;
 
-        const int bufferMax = 1024;
+        const int bufferMax = 4096;
         static byte[] buffer = new Byte[bufferMax];
         static int bufferLength = 0;
         public string lastError;
@@ -34,15 +34,12 @@ namespace LEDCube
         {
             serialPort = new SerialPort(portName, baudRate, parity, dataBits, stopBits);
             //serialPort.ReadTimeout = 1; // Set to 10ms. Default is -1?!
-            serialPort.ErrorReceived += serialPort_ErrorReceived;
             serialPort.DataReceived += new SerialDataReceivedEventHandler(SerialPortDataReceived);
+            serialPort.Flush();
             serialPort.Open();
         }
 
-        void serialPort_ErrorReceived(object sender, SerialErrorReceivedEventArgs e)
-        {
-            Debug.Print(e.ToString());
-        }
+       
 
         private void SerialPortDataReceived(object sender, SerialDataReceivedEventArgs e)
         {
@@ -55,6 +52,7 @@ namespace LEDCube
                     {
                         Debug.Print("Bytes Recieved: "+ bytesReceived);
                         bufferLength += bytesReceived;
+                        Debug.Print("Buffer Length: " + bufferLength);
                         if (bufferLength >= bufferMax)
                             throw new ApplicationException("Buffer Overflow.  Send shorter lines, or increase lineBufferMax.");
                     }

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Threading;
 
 namespace LEDCube
@@ -63,8 +64,12 @@ namespace LEDCube
         /// <returns></returns>
         public Led GetLed(int x, int y)
         {
-            
-            return Leds[x * Config.SideLength + y];
+            var idx = x*Config.SideLength + y;
+            if (Leds.Length > idx)
+            {
+                return Leds[idx];
+            }
+            return null;
         }
     }
 }

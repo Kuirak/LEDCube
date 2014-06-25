@@ -49,7 +49,10 @@ namespace LEDCube
                     {
                         if (line.Length == 1)
                         {
-                            
+                            if (line == "\t")
+                            {
+                                continue;
+                            }
                             var layerIdx = Convert.ToInt32(line);
                             bool readLayer;
                             do

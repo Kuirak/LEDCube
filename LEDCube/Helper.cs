@@ -47,7 +47,7 @@ namespace LEDCube
                //layer on
                layer.On();
 
-               Thread.Sleep(1);
+               Thread.Sleep(2);
            }
        }
     }

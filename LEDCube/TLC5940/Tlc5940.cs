@@ -224,7 +224,7 @@ namespace LEDCube
             // push the data from the input buffer on the TLC to the internal registers
             
             XLATpin.Write(true);
-            Thread.Sleep(2);
+            Thread.Sleep(1);
             XLATpin.Write(false);
            
             //GSCLKPin.SetPulse(gsclk_period, 1);
